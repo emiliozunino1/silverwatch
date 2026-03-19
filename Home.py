@@ -9,10 +9,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Logo above sidebar menu
+# Sidebar logo — use st.logo for above-menu placement, with larger size via CSS
 logo_path = "logo.png"
 if os.path.exists(logo_path):
-    st.logo(logo_path)
+    st.logo(logo_path, size="large")
 
 require_login()
 logout_button()

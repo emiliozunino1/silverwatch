@@ -1,17 +1,15 @@
 import streamlit as st
 import hmac
+import os
 
 
 def _get_users():
-    """Load users from Streamlit Secrets (production) or fallback (local dev)."""
     try:
-        # In production: secrets defined in Streamlit Cloud dashboard
         users = {}
         for username, info in st.secrets["users"].items():
             users[username] = {"password": info["password"], "role": info["role"]}
         return users
     except Exception:
-        # Local development fallback — change these before going live
         return {
             "admin":  {"password": "silverwatch_admin_2024", "role": "admin"},
             "viewer": {"password": "silverwatch_2024",        "role": "viewer"},
@@ -35,16 +33,21 @@ def is_admin() -> bool:
 
 
 def require_login():
-    """Block page until authenticated."""
     if st.session_state.get("authenticated"):
         return
+
+    # Logo above login form
+    logo_path = "logo.png"
+    if os.path.exists(logo_path):
+        col = st.columns([1, 2, 1])[1]
+        col.image(logo_path, width=220)
 
     st.title("SilverWatch — Login")
     st.markdown("Please enter your credentials to access the dashboard.")
 
     with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
+        username  = st.text_input("Username")
+        password  = st.text_input("Password", type="password")
         submitted = st.form_submit_button("Log in")
 
     if submitted:

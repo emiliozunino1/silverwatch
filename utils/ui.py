@@ -2,12 +2,28 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
+# Tight top margin + smaller title — no other overrides
+HEADER_CSS = """
+<style>
+/* Reduce the large blank area at top of every page */
+.block-container {
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+}
+/* Make the page title (st.title) smaller and tighter */
+[data-testid="stAppViewContainer"] h1 {
+    font-size: 1.4rem !important;
+    margin-bottom: 0.1rem !important;
+    padding-bottom: 0 !important;
+}
+</style>
+"""
 
 def inject_css():
-    pass  # CSS removed — using Streamlit defaults
-
+    st.markdown(HEADER_CSS, unsafe_allow_html=True)
 
 def page_header(title: str, description: str):
+    inject_css()
     st.title(title)
     st.caption(description)
     st.divider()
