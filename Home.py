@@ -9,13 +9,13 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Sidebar logo — use st.logo for above-menu placement, with larger size via CSS
-logo_path = "logo.png"
-if os.path.exists(logo_path):
-    st.logo(logo_path, size="large")
-
 require_login()
 logout_button()
+
+# Logo above title, left-aligned, same width as content
+logo_path = "logo.png"
+if os.path.exists(logo_path):
+    st.image(logo_path, width=180)
 
 st.title("SilverWatch — Luxury Cruise Intelligence")
 st.markdown("""

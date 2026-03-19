@@ -36,11 +36,10 @@ def require_login():
     if st.session_state.get("authenticated"):
         return
 
-    # Logo above login form
+    # Logo above login — left-aligned, same as home page
     logo_path = "logo.png"
     if os.path.exists(logo_path):
-        col = st.columns([1, 2, 1])[1]
-        col.image(logo_path, width=220)
+        st.image(logo_path, width=180)
 
     st.title("SilverWatch — Login")
     st.markdown("Please enter your credentials to access the dashboard.")
