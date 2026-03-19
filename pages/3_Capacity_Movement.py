@@ -1,3 +1,4 @@
+from utils.auth import require_login, logout_button
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -10,6 +11,8 @@ from utils.ui import inject_css, page_header, style_numeric_heatmap, style_pct_h
 
 st.set_page_config(page_title="Capacity Movement", layout="wide")
 inject_css()
+require_login()
+logout_button()
 
 DATA_PATH = "SilverWatch_PowerBi_input_ALL_MARKETS.xlsx"
 df_full   = load_data(DATA_PATH)

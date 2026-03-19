@@ -2,26 +2,10 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-COMPACT_CSS = """
-<style>
-.block-container {
-    padding-top: 0.5rem !important;
-    padding-left: 0.8rem !important;
-    padding-right: 0.8rem !important;
-    max-width: 100% !important;
-}
-/* do NOT touch h1 — let st.title render normally */
-h2 { font-size: 1.0rem !important; margin: 4px 0 2px 0 !important; }
-h3 { font-size: 0.92rem !important; margin: 3px 0 2px 0 !important; }
-h4, h5 { font-size: 0.85rem !important; margin: 2px 0 1px 0 !important; }
-div[data-baseweb="select"] { font-size: 0.78rem !important; }
-button[data-baseweb="tab"] { font-size: 0.80rem !important; padding: 4px 12px !important; }
-section[data-testid="stSidebar"] .block-container { padding-top: 0.3rem !important; }
-</style>
-"""
 
 def inject_css():
-    st.markdown(COMPACT_CSS, unsafe_allow_html=True)
+    pass  # CSS removed — using Streamlit defaults
+
 
 def page_header(title: str, description: str):
     st.title(title)
@@ -29,7 +13,6 @@ def page_header(title: str, description: str):
     st.divider()
 
 
-# ── Matplotlib-free heatmap helpers ──────────────────────────────────────────
 def style_numeric_heatmap(df: pd.DataFrame,
                            low_hex="#dce9f5", high_hex="#08306b",
                            fmt="{:,.0f}", na_rep="—"):

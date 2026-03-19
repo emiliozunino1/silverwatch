@@ -1,3 +1,4 @@
+from utils.auth import require_login, logout_button
 import streamlit as st
 from utils.data_loader import load_data
 from utils.sidebar import render_sidebar
@@ -5,6 +6,8 @@ from utils.ui import inject_css, page_header
 
 st.set_page_config(page_title="User Guide", layout="wide")
 inject_css()
+require_login()
+logout_button()
 
 DATA_PATH = "SilverWatch_PowerBi_input_ALL_MARKETS.xlsx"
 df_full   = load_data(DATA_PATH)
