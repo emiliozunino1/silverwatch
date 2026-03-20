@@ -5,7 +5,7 @@ import plotly.express as px
 from utils.data_loader import (load_data, apply_filters, MONTH_NAMES,
                                 COMPANY_COLORS, AREA_COLORS)
 from utils.sidebar import render_sidebar
-from utils.ui import inject_css, page_header
+from utils.ui import inject_css, page_header, bordered_chart, bordered_dataframe
 
 st.set_page_config(page_title="Blockout View", layout="wide")
 inject_css()
@@ -42,8 +42,12 @@ with tab1:
                                   default=[], key="bv_area")
     search_bv  = fc3.text_input("Search itinerary / voyage ID", key="bv_search")
 
-    cols = ["Company","ShipName","Voyage","AreaLabel","Itinerary",
-            "DepartureDate","ArrivalDate","CruiseNights","CruiseNightsInterval","Availability_tag"]
+    # Build column list — include port columns if available
+    base_cols = ["Company","ShipName","Voyage","AreaLabel","Itinerary"]
+    port_cols_present = [c for c in ["Embarkement_Port_Name","Disembarkement_Port_Name"]
+                         if c in df_last.columns and df_last[c].notna().any()]
+    extra_cols = ["DepartureDate","ArrivalDate","CruiseNights","CruiseNightsInterval","Availability_tag"]
+    cols = base_cols + port_cols_present + extra_cols
     tbl = df_last[cols].drop_duplicates(subset=["Company","Voyage"]).copy()
     if sel_co_bv:  tbl = tbl[tbl["Company"].isin(sel_co_bv)]
     if sel_ar_bv:  tbl = tbl[tbl["AreaLabel"].isin(sel_ar_bv)]
@@ -63,7 +67,7 @@ with tab1:
         fg = "#ffffff" if 0.299*r+0.587*g+0.114*b < 140 else "#222222"
         return f"background-color:{bg}; color:{fg}; font-size:0.75rem"
 
-    st.dataframe(tbl.style.applymap(color_area, subset=["Area"])
+    bordered_dataframe(tbl.style.applymap(color_area, subset=["Area"])
                            .set_properties(**{"font-size":"0.75rem"}),
                  use_container_width=True, height=500)
     st.caption(f"{len(tbl):,} voyages")
@@ -169,7 +173,7 @@ with tab3:
             st.markdown(f"**{co}**")
             t = week_summary(co)
             t["Week (Sun)"] = t["Week (Sun)"].dt.strftime("%Y-%m-%d")
-            st.dataframe(t, use_container_width=True, height=460,
+            bordered_dataframe(t, use_container_width=True, height=460,
                          column_config={
                              "Voyages":     st.column_config.NumberColumn(format="%d"),
                              "Itineraries": st.column_config.TextColumn(width="large")})

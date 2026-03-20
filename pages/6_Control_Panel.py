@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from utils.data_loader import load_data, PPD_OUTLIER_THRESHOLD
-from utils.ui import inject_css, page_header
+from utils.ui import inject_css, page_header, bordered_chart, bordered_dataframe
 from utils.auth import require_login, logout_button, is_admin
 
 st.set_page_config(page_title="Control Panel", layout="wide")

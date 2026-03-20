@@ -2,7 +2,7 @@ from utils.auth import require_login, logout_button
 import streamlit as st
 from utils.data_loader import load_data
 from utils.sidebar import render_sidebar
-from utils.ui import inject_css, page_header
+from utils.ui import inject_css, page_header, bordered_chart, bordered_dataframe
 
 st.set_page_config(page_title="User Guide", layout="wide")
 inject_css()

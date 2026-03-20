@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import streamlit as st
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 FX_RATES_TO_USD = {"USD": 1.0, "EUR": 1.08, "GBP": 1.27, "AUD": 0.65}
 
@@ -53,30 +55,47 @@ AREA_COLORS = {
 }
 
 
+def _get_port_coords():
+    try:
+        from port_coords import PORT_COORDS
+        return PORT_COORDS
+    except ImportError:
+        return {}
+
+
 @st.cache_data(show_spinner="Loading data...")
 def load_data(filepath: str) -> pd.DataFrame:
     df = pd.read_excel(filepath)
+    PORT_COORDS = _get_port_coords()
 
-    def parse_dep_day(row):
-        v=row["Voyage"]; yr=row["Voyage_Start_Year"]; mo=row["Voyage_Start_Month"]
-        try:
-            sy,sm,sd=int(v[4:6]),int(v[6:8]),int(v[8:10])
-            if sm==mo and (2000+sy)==yr and 1<=sd<=31: return sd
-        except (ValueError,IndexError): pass
-        try:
-            hy,hm,hd=int(v[2:4]),int(v[4:6]),int(v[6:8])
-            if hm==mo and (2000+hy)==yr and 1<=hd<=31: return hd
-        except (ValueError,IndexError): pass
-        return None
+    # Use CruiseStartDate/CruiseEndDate if available, else parse from Voyage code
+    if "CruiseStartDate" in df.columns:
+        df["DepartureDate"] = pd.to_datetime(df["CruiseStartDate"], errors="coerce")
+    else:
+        def parse_dep_day(row):
+            v=row["Voyage"]; yr=row["Voyage_Start_Year"]; mo=row["Voyage_Start_Month"]
+            try:
+                sy,sm,sd=int(v[4:6]),int(v[6:8]),int(v[8:10])
+                if sm==mo and (2000+sy)==yr and 1<=sd<=31: return sd
+            except (ValueError,IndexError): pass
+            try:
+                hy,hm,hd=int(v[2:4]),int(v[4:6]),int(v[6:8])
+                if hm==mo and (2000+hy)==yr and 1<=hd<=31: return hd
+            except (ValueError,IndexError): pass
+            return None
+        df["dep_day"]  = df.apply(parse_dep_day, axis=1)
+        df["dep_year"] = df["Voyage_Start_Year"]
+        df["dep_month"]= df["Voyage_Start_Month"]
+        df["DepartureDate"] = pd.to_datetime(
+            dict(year=df["dep_year"],month=df["dep_month"],day=df["dep_day"].fillna(1)),
+            errors="coerce")
+        df.loc[df["dep_day"].isna(),"DepartureDate"] = pd.NaT
 
-    df["dep_day"]  = df.apply(parse_dep_day, axis=1)
-    df["dep_year"] = df["Voyage_Start_Year"]
-    df["dep_month"]= df["Voyage_Start_Month"]
-    df["DepartureDate"] = pd.to_datetime(
-        dict(year=df["dep_year"],month=df["dep_month"],day=df["dep_day"].fillna(1)),
-        errors="coerce")
-    df.loc[df["dep_day"].isna(),"DepartureDate"] = pd.NaT
-    df["ArrivalDate"]      = df["DepartureDate"] + pd.to_timedelta(df["CruiseNights"],unit="D")
+    if "CruiseEndDate" in df.columns:
+        df["ArrivalDate"] = pd.to_datetime(df["CruiseEndDate"], errors="coerce")
+    else:
+        df["ArrivalDate"] = df["DepartureDate"] + pd.to_timedelta(df["CruiseNights"],unit="D")
+
     df["ArrivalMonth"]     = df["ArrivalDate"].dt.month
     df["ArrivalYear"]      = df["ArrivalDate"].dt.year.astype("Int64")
     df["ArrivalMonthName"] = df["ArrivalMonth"].map(MONTH_NAMES)
@@ -85,12 +104,25 @@ def load_data(filepath: str) -> pd.DataFrame:
         (df["ArrivalDate"].dt.dayofweek+1)%7, unit="D")
 
     obs_sorted = sorted(df["AsDate"].dropna().unique())
-    df["ObsDate"]     = df["AsDate"].dt.strftime("%Y-%m-%d")
-    df["ObsDateLabel"]= df["AsDate"].map({d: pd.Timestamp(d).strftime("%d %b %Y") for d in obs_sorted})
+    df["ObsDate"]      = df["AsDate"].dt.strftime("%Y-%m-%d")
+    df["ObsDateLabel"] = df["AsDate"].map({d: pd.Timestamp(d).strftime("%d %b %Y") for d in obs_sorted})
 
     df["AreaLabel"] = df["Area"].map(AREA_LABELS).fillna(df["Area"])
     df["AreaLat"]   = df["AreaLabel"].map(lambda x: AREA_COORDS.get(x,(0,0))[0])
     df["AreaLon"]   = df["AreaLabel"].map(lambda x: AREA_COORDS.get(x,(0,0))[1])
+
+    # Port coordinates
+    if "Embarkement_Port_Name" in df.columns:
+        df["EmbLat"] = df["Embarkement_Port_Name"].map(
+            lambda x: PORT_COORDS.get(x,(None,None))[0] if x else None)
+        df["EmbLon"] = df["Embarkement_Port_Name"].map(
+            lambda x: PORT_COORDS.get(x,(None,None))[1] if x else None)
+    else:
+        df["Embarkement_Port_Name"]    = None
+        df["Disembarkement_Port_Name"] = None
+        df["EmbLat"] = None
+        df["EmbLon"] = None
+
     df["PPD_outlier"] = (
         (df["Entry_Ad_PPD"] > PPD_OUTLIER_THRESHOLD) |
         (df["Entry_Ad_PPD"] == 0) | df["Entry_Ad_PPD"].isna()
