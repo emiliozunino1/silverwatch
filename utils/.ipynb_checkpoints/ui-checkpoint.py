@@ -11,29 +11,31 @@ def _img_to_b64(path: str) -> str:
 
 
 def _build_css(maiora_b64: str) -> str:
-    logo_display = f'url("data:image/png;base64,{maiora_b64}")' if maiora_b64 else "none"
     header_left = "120px" if maiora_b64 else "16px"
 
-    header_after_css = f"""
-    [data-testid="stHeader"]::after {{
-        content: "";
-        position: absolute;
-        left: 8px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 100px;
-        height: 32px;
-        background-image: {logo_display};
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: left center;
-        z-index: 999;
-    }}
-    """ if maiora_b64 else ""
+    header_after_css = ""
+    if maiora_b64:
+        header_after_css = f"""
+        [data-testid="stHeader"]::after {{
+            content: "";
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 96px;
+            height: 28px;
+            background-image: url("data:image/png;base64,{maiora_b64}");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: left center;
+            z-index: 999;
+            pointer-events: none;
+        }}
+        """
 
     return f"""
     <style>
-    /* Tighten page padding */
+    /* Main page padding */
     .block-container {{
         padding-top: 2.8rem !important;
         padding-bottom: 0.5rem !important;
@@ -59,20 +61,48 @@ def _build_css(maiora_b64: str) -> str:
         letter-spacing: 0.12em;
         color: #1a1a2e;
         z-index: 999;
+        pointer-events: none;
+        white-space: nowrap;
     }}
 
     {header_after_css}
 
-    /* Sidebar spacing */
+    /* When sidebar is narrow/collapsed, hide header branding to avoid overlap */
+    @media (max-width: 1200px) {{
+        [data-testid="stHeader"]::before,
+        [data-testid="stHeader"]::after {{
+            content: none !important;
+            display: none !important;
+        }}
+    }}
+
+    /* Sidebar */
     section[data-testid="stSidebar"] .block-container {{
         padding-top: 0.4rem !important;
     }}
 
-    /* Center any sidebar image */
-    section[data-testid="stSidebar"] img {{
+    /* Sidebar logo wrapper created by st.image */
+    .sidebar-logo-wrap {{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin: 0.2rem 0 0.7rem 0;
+    }}
+
+    /* Hard cap on sidebar logo size */
+    .sidebar-logo-wrap img {{
+        width: 180px !important;
+        max-width: 180px !important;
+        min-width: 180px !important;
+        height: auto !important;
         display: block !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
+        object-fit: contain !important;
+    }}
+
+    /* Also protect against generic sidebar image scaling */
+    section[data-testid="stSidebar"] img {{
+        max-width: 180px !important;
         height: auto !important;
     }}
 
@@ -117,10 +147,12 @@ def inject_css():
 
 
 def render_sidebar_logo():
-    logo_path = "logo_maiora.png"
+    logo_path = "logo_silversea.png"   # change if your sidebar logo file has a different name
     if os.path.exists(logo_path):
         with st.sidebar:
-            st.image(logo_path, width=150)
+            st.markdown('<div class="sidebar-logo-wrap">', unsafe_allow_html=True)
+            st.image(logo_path, width=180)
+            st.markdown('</div>', unsafe_allow_html=True)
 
 
 def page_header(title: str, description: str):
