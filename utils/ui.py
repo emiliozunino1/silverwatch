@@ -4,12 +4,15 @@ import numpy as np
 import os
 import base64
 
-def _img_to_b64(path):
+
+def _img_to_b64(path: str) -> str:
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
+
 def _build_css(maiora_b64: str) -> str:
     logo_display = f'url("data:image/png;base64,{maiora_b64}")' if maiora_b64 else "none"
+    header_left = "120px" if maiora_b64 else "16px"
 
     header_after_css = f"""
     [data-testid="stHeader"]::after {{
@@ -28,8 +31,6 @@ def _build_css(maiora_b64: str) -> str:
     }}
     """ if maiora_b64 else ""
 
-    header_left = "120px" if maiora_b64 else "16px"
-
     return f"""
     <style>
     /* Tighten page padding */
@@ -40,10 +41,11 @@ def _build_css(maiora_b64: str) -> str:
         padding-right: 1rem !important;
     }}
 
-    /* Inject Maiora logo + SILVERWATCH text into the Streamlit header bar */
+    /* Header */
     [data-testid="stHeader"] {{
         background: white !important;
         border-bottom: 1px solid #e8e8e8 !important;
+        position: relative !important;
     }}
 
     [data-testid="stHeader"]::before {{
@@ -61,20 +63,17 @@ def _build_css(maiora_b64: str) -> str:
 
     {header_after_css}
 
-    /* Silversea logo in sidebar — bigger and centered */
-    [data-testid="stSidebarHeader"] img,
-    [data-testid="stLogo"] img {{
-        width: 70% !important;
-        max-width: 140px !important;
-        margin: 0 auto !important;
-        display: block !important;
+    /* Sidebar spacing */
+    section[data-testid="stSidebar"] .block-container {{
+        padding-top: 0.4rem !important;
     }}
 
-    [data-testid="stSidebarHeader"],
-    [data-testid="stLogo"] {{
-        display: flex !important;
-        justify-content: center !important;
-        padding: 0.5rem 0 !important;
+    /* Center any sidebar image */
+    section[data-testid="stSidebar"] img {{
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        height: auto !important;
     }}
 
     /* Compact widgets */
@@ -97,10 +96,6 @@ def _build_css(maiora_b64: str) -> str:
         font-size: 0.84rem !important;
     }}
 
-    section[data-testid="stSidebar"] .block-container {{
-        padding-top: 0.3rem !important;
-    }}
-
     hr {{
         margin: 0.3rem 0 !important;
     }}
@@ -113,17 +108,28 @@ def _build_css(maiora_b64: str) -> str:
     </style>
     """
 
+
 def inject_css():
     maiora_b64 = ""
     if os.path.exists("logo_maiora.png"):
         maiora_b64 = _img_to_b64("logo_maiora.png")
     st.markdown(_build_css(maiora_b64), unsafe_allow_html=True)
 
+
+def render_sidebar_logo():
+    logo_path = "logo_maiora.png"
+    if os.path.exists(logo_path):
+        with st.sidebar:
+            st.image(logo_path, width=150)
+
+
 def page_header(title: str, description: str):
     inject_css()
+    render_sidebar_logo()
     st.title(title)
     st.caption(description)
     st.divider()
+
 
 def bordered_chart(fig, **kwargs):
     st.markdown(
@@ -131,7 +137,8 @@ def bordered_chart(fig, **kwargs):
         unsafe_allow_html=True
     )
     st.plotly_chart(fig, **kwargs)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
 
 def bordered_dataframe(df_or_styler, **kwargs):
     st.markdown(
@@ -139,11 +146,16 @@ def bordered_dataframe(df_or_styler, **kwargs):
         unsafe_allow_html=True
     )
     st.dataframe(df_or_styler, **kwargs)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-def style_numeric_heatmap(df: pd.DataFrame,
-                          low_hex="#dce9f5", high_hex="#08306b",
-                          fmt="{:,.0f}", na_rep="—"):
+
+def style_numeric_heatmap(
+    df: pd.DataFrame,
+    low_hex: str = "#dce9f5",
+    high_hex: str = "#08306b",
+    fmt: str = "{:,.0f}",
+    na_rep: str = "—"
+):
     vals = df.values.astype(float)
     fin = vals[np.isfinite(vals)]
     vmin = float(fin.min()) if len(fin) else 0
@@ -158,15 +170,18 @@ def style_numeric_heatmap(df: pd.DataFrame,
     def cell(val):
         try:
             v = float(val)
-        except:
+        except Exception:
             return "text-align:center"
+
         if not np.isfinite(v):
             return "text-align:center"
+
         t = max(0.0, min(1.0, (v - vmin) / (vmax - vmin) if vmax > vmin else 0.5))
         r = int(r0 + t * (r1 - r0))
         g = int(g0 + t * (g1 - g0))
         b = int(b0 + t * (b1 - b0))
         fg = "#ffffff" if 0.299 * r + 0.587 * g + 0.114 * b < 140 else "#111111"
+
         return f"background-color:#{r:02x}{g:02x}{b:02x}; color:{fg}; text-align:center"
 
     return (
@@ -180,14 +195,17 @@ def style_numeric_heatmap(df: pd.DataFrame,
         ])
     )
 
-def style_pct_heatmap(df: pd.DataFrame, fmt="{:+.1f}%", na_rep="—"):
+
+def style_pct_heatmap(df: pd.DataFrame, fmt: str = "{:+.1f}%", na_rep: str = "—"):
     def cell(val):
         try:
             v = float(val)
-        except:
+        except Exception:
             return "text-align:center"
+
         if not np.isfinite(v):
             return "text-align:center"
+
         if v > 0:
             t = min(1.0, v / 20)
             r = int(255 - t * 155)
@@ -200,8 +218,13 @@ def style_pct_heatmap(df: pd.DataFrame, fmt="{:+.1f}%", na_rep="—"):
             b = int(255 - t * 155)
         else:
             r = g = b = 255
+
         fg = "#111111" if 0.299 * r + 0.587 * g + 0.114 * b > 140 else "#ffffff"
-        return f"background-color:#{r:02x}{g:02x}{b:02x}; color:{fg}; font-weight:500; text-align:center"
+
+        return (
+            f"background-color:#{r:02x}{g:02x}{b:02x}; "
+            f"color:{fg}; font-weight:500; text-align:center"
+        )
 
     return (
         df.style
