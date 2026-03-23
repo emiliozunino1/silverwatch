@@ -21,7 +21,7 @@ def _build_css(maiora_b64: str) -> str:
             left: 72px;
             top: 50%;
             transform: translateY(-50%);
-            width: 118px;
+            width: 120px;
             height: 30px;
             background-image: url("data:image/png;base64,{maiora_b64}");
             background-size: contain;
@@ -34,22 +34,22 @@ def _build_css(maiora_b64: str) -> str:
         [data-testid="stHeader"]::after {{
             content: "SILVERWATCH";
             position: absolute;
-            left: 198px;
+            left: 205px;
             top: 50%;
-            transform: translateY(-52%);
-            font-size: 0.88rem;
+            transform: translateY(-50%);
+            font-size: 0.86rem;
             font-weight: 700;
             letter-spacing: 0.14em;
             color: #111827;
             z-index: 1000;
             pointer-events: none;
             white-space: nowrap;
-            line-height: 1;
         }}
         """
 
     return f"""
     <style>
+    /* Layout */
     .block-container {{
         padding-top: 2.8rem !important;
         padding-bottom: 0.5rem !important;
@@ -57,6 +57,7 @@ def _build_css(maiora_b64: str) -> str:
         padding-right: 1rem !important;
     }}
 
+    /* Header */
     [data-testid="stHeader"] {{
         background: white !important;
         border-bottom: 1px solid #e8e8e8 !important;
@@ -66,15 +67,29 @@ def _build_css(maiora_b64: str) -> str:
 
     {header_branding}
 
-    /* Hide default sidebar image/logo if any still gets rendered */
+    /* ðŸ”¥ REMOVE ANY IMAGE FROM SIDEBAR (expanded + collapsed) */
     section[data-testid="stSidebar"] img {{
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+    }}
+
+    /* Also remove possible logo container spacing */
+    section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] {{
         display: none !important;
     }}
 
-    section[data-testid="stSidebar"] .block-container {{
-        padding-top: 0.35rem !important;
+    /* Extra safety: collapsed sidebar */
+    section[data-testid="stSidebar"][aria-expanded="false"] img {{
+        display: none !important;
     }}
 
+    /* Compact sidebar */
+    section[data-testid="stSidebar"] .block-container {{
+        padding-top: 0.3rem !important;
+    }}
+
+    /* Widgets */
     div[data-testid="stHorizontalBlock"] {{
         gap: 6px !important;
         align-items: flex-end !important;
@@ -160,7 +175,7 @@ def style_numeric_heatmap(
     def cell(val):
         try:
             v = float(val)
-        except Exception:
+        except:
             return "text-align:center"
 
         if not np.isfinite(v):
@@ -175,8 +190,7 @@ def style_numeric_heatmap(
         return f"background-color:#{r:02x}{g:02x}{b:02x}; color:{fg}; text-align:center"
 
     return (
-        df.style
-        .applymap(cell)
+        df.style.applymap(cell)
         .format(fmt, na_rep=na_rep)
         .set_properties(**{"text-align": "center"})
         .set_table_styles([
@@ -190,7 +204,7 @@ def style_pct_heatmap(df: pd.DataFrame, fmt: str = "{:+.1f}%", na_rep: str = "â€
     def cell(val):
         try:
             v = float(val)
-        except Exception:
+        except:
             return "text-align:center"
 
         if not np.isfinite(v):
@@ -211,14 +225,10 @@ def style_pct_heatmap(df: pd.DataFrame, fmt: str = "{:+.1f}%", na_rep: str = "â€
 
         fg = "#111111" if 0.299 * r + 0.587 * g + 0.114 * b > 140 else "#ffffff"
 
-        return (
-            f"background-color:#{r:02x}{g:02x}{b:02x}; "
-            f"color:{fg}; font-weight:500; text-align:center"
-        )
+        return f"background-color:#{r:02x}{g:02x}{b:02x}; color:{fg}; font-weight:500; text-align:center"
 
     return (
-        df.style
-        .applymap(cell)
+        df.style.applymap(cell)
         .format(fmt, na_rep=na_rep)
         .set_properties(**{"text-align": "center"})
         .set_table_styles([
