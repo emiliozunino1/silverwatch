@@ -43,7 +43,7 @@ def _build_css(maiora_b64: str) -> str:
 /* Silversea logo in sidebar — bigger and centered */
 [data-testid="stSidebarHeader"] img,
 [data-testid="stLogo"] img {
-    width: 70% !important;
+    width: 70%% !important;
     max-width: 140px !important;
     margin: 0 auto !important;
     display: block !important;
