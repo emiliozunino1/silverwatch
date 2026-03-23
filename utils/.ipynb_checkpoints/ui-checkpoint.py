@@ -11,31 +11,44 @@ def _img_to_b64(path: str) -> str:
 
 
 def _build_css(maiora_b64: str) -> str:
-    header_left = "120px" if maiora_b64 else "16px"
-
-    header_after_css = ""
+    header_branding = ""
     if maiora_b64:
-        header_after_css = f"""
-        [data-testid="stHeader"]::after {{
+        header_branding = f"""
+        [data-testid="stHeader"]::before {{
             content: "";
             position: absolute;
-            left: 8px;
+            left: 10px;
             top: 50%;
             transform: translateY(-50%);
-            width: 96px;
-            height: 28px;
+            width: 95px;
+            height: 26px;
             background-image: url("data:image/png;base64,{maiora_b64}");
             background-size: contain;
             background-repeat: no-repeat;
             background-position: left center;
-            z-index: 999;
+            z-index: 1000;
             pointer-events: none;
+        }}
+
+        [data-testid="stHeader"]::after {{
+            content: "SILVERWATCH";
+            position: absolute;
+            left: 118px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.92rem;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: #1a1a2e;
+            z-index: 1000;
+            pointer-events: none;
+            white-space: nowrap;
         }}
         """
 
     return f"""
     <style>
-    /* Main page padding */
+    /* Page padding */
     .block-container {{
         padding-top: 2.8rem !important;
         padding-bottom: 0.5rem !important;
@@ -48,61 +61,37 @@ def _build_css(maiora_b64: str) -> str:
         background: white !important;
         border-bottom: 1px solid #e8e8e8 !important;
         position: relative !important;
+        min-height: 3.75rem !important;
     }}
 
-    [data-testid="stHeader"]::before {{
-        content: "SILVERWATCH";
-        position: absolute;
-        left: {header_left};
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 0.95rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        color: #1a1a2e;
-        z-index: 999;
-        pointer-events: none;
-        white-space: nowrap;
-    }}
+    {header_branding}
 
-    {header_after_css}
-
-    /* When sidebar is narrow/collapsed, hide header branding to avoid overlap */
-    @media (max-width: 1200px) {{
-        [data-testid="stHeader"]::before,
-        [data-testid="stHeader"]::after {{
-            content: none !important;
-            display: none !important;
-        }}
-    }}
-
-    /* Sidebar */
+    /* Sidebar spacing */
     section[data-testid="stSidebar"] .block-container {{
-        padding-top: 0.4rem !important;
+        padding-top: 0.35rem !important;
     }}
 
-    /* Sidebar logo wrapper created by st.image */
+    /* Fixed-size sidebar logo */
     .sidebar-logo-wrap {{
+        width: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 100%;
-        margin: 0.2rem 0 0.7rem 0;
+        margin: 0.15rem 0 0.75rem 0;
+        overflow: hidden;
     }}
 
-    /* Hard cap on sidebar logo size */
     .sidebar-logo-wrap img {{
-        width: 180px !important;
-        max-width: 180px !important;
-        min-width: 180px !important;
+        width: 140px !important;
+        min-width: 140px !important;
+        max-width: 140px !important;
         height: auto !important;
         display: block !important;
         object-fit: contain !important;
     }}
 
-    /* Also protect against generic sidebar image scaling */
+    /* Prevent generic sidebar image scaling */
     section[data-testid="stSidebar"] img {{
-        max-width: 180px !important;
         height: auto !important;
     }}
 
@@ -136,6 +125,59 @@ def _build_css(maiora_b64: str) -> str:
         padding: 0 !important;
     }}
     </style>
+
+    <script>
+    function syncHeaderBranding() {{
+        const sidebar = window.parent.document.querySelector('section[data-testid="stSidebar"]');
+        const header = window.parent.document.querySelector('[data-testid="stHeader"]');
+        const collapseBtn = window.parent.document.querySelector('button[kind="header"]');
+
+        if (!sidebar || !header) return;
+
+        const sidebarWidth = sidebar.offsetWidth || 0;
+
+        if (sidebarWidth <= 80) {{
+            header.classList.add("sidebar-collapsed");
+            if (collapseBtn) {{
+                collapseBtn.style.visibility = "hidden";
+            }}
+        }} else {{
+            header.classList.remove("sidebar-collapsed");
+            if (collapseBtn) {{
+                collapseBtn.style.visibility = "visible";
+            }}
+        }}
+    }}
+
+    const styleTag = window.parent.document.getElementById("dynamic-header-collapse-style") || (() => {{
+        const s = window.parent.document.createElement("style");
+        s.id = "dynamic-header-collapse-style";
+        window.parent.document.head.appendChild(s);
+        return s;
+    }})();
+
+    styleTag.innerHTML = `
+        [data-testid="stHeader"].sidebar-collapsed::before,
+        [data-testid="stHeader"].sidebar-collapsed::after {{
+            content: none !important;
+            display: none !important;
+        }}
+    `;
+
+    syncHeaderBranding();
+    setTimeout(syncHeaderBranding, 200);
+    setTimeout(syncHeaderBranding, 700);
+
+    const parentWindow = window.parent;
+    parentWindow.addEventListener("resize", syncHeaderBranding);
+
+    const observer = new MutationObserver(syncHeaderBranding);
+    observer.observe(parentWindow.document.body, {{
+        attributes: true,
+        childList: true,
+        subtree: true
+    }});
+    </script>
     """
 
 
@@ -147,12 +189,14 @@ def inject_css():
 
 
 def render_sidebar_logo():
-    logo_path = "logo_silversea.png"   # change if your sidebar logo file has a different name
-    if os.path.exists(logo_path):
+    possible_paths = ["logo_silversea.png", "logo_maiora.png"]
+    logo_path = next((p for p in possible_paths if os.path.exists(p)), None)
+
+    if logo_path:
         with st.sidebar:
             st.markdown('<div class="sidebar-logo-wrap">', unsafe_allow_html=True)
-            st.image(logo_path, width=180)
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.image(logo_path, width=140)
+            st.markdown("</div>", unsafe_allow_html=True)
 
 
 def page_header(title: str, description: str):
