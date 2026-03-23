@@ -12,16 +12,17 @@ def _img_to_b64(path: str) -> str:
 
 def _build_css(maiora_b64: str) -> str:
     header_branding = ""
+
     if maiora_b64:
         header_branding = f"""
         [data-testid="stHeader"]::before {{
             content: "";
             position: absolute;
-            left: 10px;
+            left: 72px;
             top: 50%;
             transform: translateY(-50%);
-            width: 95px;
-            height: 26px;
+            width: 110px;
+            height: 28px;
             background-image: url("data:image/png;base64,{maiora_b64}");
             background-size: contain;
             background-repeat: no-repeat;
@@ -33,12 +34,12 @@ def _build_css(maiora_b64: str) -> str:
         [data-testid="stHeader"]::after {{
             content: "SILVERWATCH";
             position: absolute;
-            left: 118px;
+            left: 190px;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 0.92rem;
+            font-size: 0.90rem;
             font-weight: 700;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.10em;
             color: #1a1a2e;
             z-index: 1000;
             pointer-events: none;
@@ -48,7 +49,6 @@ def _build_css(maiora_b64: str) -> str:
 
     return f"""
     <style>
-    /* Page padding */
     .block-container {{
         padding-top: 2.8rem !important;
         padding-bottom: 0.5rem !important;
@@ -56,46 +56,47 @@ def _build_css(maiora_b64: str) -> str:
         padding-right: 1rem !important;
     }}
 
-    /* Header */
     [data-testid="stHeader"] {{
         background: white !important;
         border-bottom: 1px solid #e8e8e8 !important;
         position: relative !important;
-        min-height: 3.75rem !important;
+        min-height: 3.6rem !important;
     }}
 
     {header_branding}
 
-    /* Sidebar spacing */
+    /* If the screen gets narrow, hide header branding completely */
+    @media (max-width: 900px) {{
+        [data-testid="stHeader"]::before,
+        [data-testid="stHeader"]::after {{
+            content: none !important;
+            display: none !important;
+        }}
+    }}
+
     section[data-testid="stSidebar"] .block-container {{
         padding-top: 0.35rem !important;
     }}
 
-    /* Fixed-size sidebar logo */
     .sidebar-logo-wrap {{
         width: 100%;
         display: flex;
         justify-content: center;
         align-items: center;
-        margin: 0.15rem 0 0.75rem 0;
+        margin: 0.10rem 0 0.60rem 0;
         overflow: hidden;
     }}
 
+    /* Fixed logo size: never grows with sidebar width */
     .sidebar-logo-wrap img {{
-        width: 140px !important;
-        min-width: 140px !important;
-        max-width: 140px !important;
+        width: 135px !important;
+        min-width: 135px !important;
+        max-width: 135px !important;
         height: auto !important;
         display: block !important;
         object-fit: contain !important;
     }}
 
-    /* Prevent generic sidebar image scaling */
-    section[data-testid="stSidebar"] img {{
-        height: auto !important;
-    }}
-
-    /* Compact widgets */
     div[data-testid="stHorizontalBlock"] {{
         gap: 6px !important;
         align-items: flex-end !important;
@@ -125,59 +126,6 @@ def _build_css(maiora_b64: str) -> str:
         padding: 0 !important;
     }}
     </style>
-
-    <script>
-    function syncHeaderBranding() {{
-        const sidebar = window.parent.document.querySelector('section[data-testid="stSidebar"]');
-        const header = window.parent.document.querySelector('[data-testid="stHeader"]');
-        const collapseBtn = window.parent.document.querySelector('button[kind="header"]');
-
-        if (!sidebar || !header) return;
-
-        const sidebarWidth = sidebar.offsetWidth || 0;
-
-        if (sidebarWidth <= 80) {{
-            header.classList.add("sidebar-collapsed");
-            if (collapseBtn) {{
-                collapseBtn.style.visibility = "hidden";
-            }}
-        }} else {{
-            header.classList.remove("sidebar-collapsed");
-            if (collapseBtn) {{
-                collapseBtn.style.visibility = "visible";
-            }}
-        }}
-    }}
-
-    const styleTag = window.parent.document.getElementById("dynamic-header-collapse-style") || (() => {{
-        const s = window.parent.document.createElement("style");
-        s.id = "dynamic-header-collapse-style";
-        window.parent.document.head.appendChild(s);
-        return s;
-    }})();
-
-    styleTag.innerHTML = `
-        [data-testid="stHeader"].sidebar-collapsed::before,
-        [data-testid="stHeader"].sidebar-collapsed::after {{
-            content: none !important;
-            display: none !important;
-        }}
-    `;
-
-    syncHeaderBranding();
-    setTimeout(syncHeaderBranding, 200);
-    setTimeout(syncHeaderBranding, 700);
-
-    const parentWindow = window.parent;
-    parentWindow.addEventListener("resize", syncHeaderBranding);
-
-    const observer = new MutationObserver(syncHeaderBranding);
-    observer.observe(parentWindow.document.body, {{
-        attributes: true,
-        childList: true,
-        subtree: true
-    }});
-    </script>
     """
 
 
@@ -195,7 +143,7 @@ def render_sidebar_logo():
     if logo_path:
         with st.sidebar:
             st.markdown('<div class="sidebar-logo-wrap">', unsafe_allow_html=True)
-            st.image(logo_path, width=140)
+            st.image(logo_path, width=135)
             st.markdown("</div>", unsafe_allow_html=True)
 
 
