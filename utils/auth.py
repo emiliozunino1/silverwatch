@@ -36,10 +36,14 @@ def require_login():
     if st.session_state.get("authenticated"):
         return
 
-    # Logo above login — left-aligned, same as home page
-    logo_path = "logo.png"
-    if os.path.exists(logo_path):
-        st.image(logo_path, width=180)
+    # Show Maiora logo + SILVERWATCH in fixed header on login page too
+    from utils.ui import _fixed_header_html, LAYOUT_CSS
+    st.markdown(LAYOUT_CSS, unsafe_allow_html=True)
+    st.markdown(_fixed_header_html("logo_maiora.png", "", ""), unsafe_allow_html=True)
+
+    # Silversea logo left-aligned above login form
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=160)
 
     st.title("SilverWatch — Login")
     st.markdown("Please enter your credentials to access the dashboard.")
