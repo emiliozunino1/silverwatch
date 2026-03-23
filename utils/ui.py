@@ -21,8 +21,8 @@ def _build_css(maiora_b64: str) -> str:
             left: 72px;
             top: 50%;
             transform: translateY(-50%);
-            width: 110px;
-            height: 28px;
+            width: 118px;
+            height: 30px;
             background-image: url("data:image/png;base64,{maiora_b64}");
             background-size: contain;
             background-repeat: no-repeat;
@@ -34,16 +34,17 @@ def _build_css(maiora_b64: str) -> str:
         [data-testid="stHeader"]::after {{
             content: "SILVERWATCH";
             position: absolute;
-            left: 190px;
+            left: 198px;
             top: 50%;
-            transform: translateY(-50%);
-            font-size: 0.90rem;
+            transform: translateY(-52%);
+            font-size: 0.88rem;
             font-weight: 700;
-            letter-spacing: 0.10em;
-            color: #1a1a2e;
+            letter-spacing: 0.14em;
+            color: #111827;
             z-index: 1000;
             pointer-events: none;
             white-space: nowrap;
+            line-height: 1;
         }}
         """
 
@@ -65,36 +66,13 @@ def _build_css(maiora_b64: str) -> str:
 
     {header_branding}
 
-    /* If the screen gets narrow, hide header branding completely */
-    @media (max-width: 900px) {{
-        [data-testid="stHeader"]::before,
-        [data-testid="stHeader"]::after {{
-            content: none !important;
-            display: none !important;
-        }}
+    /* Hide default sidebar image/logo if any still gets rendered */
+    section[data-testid="stSidebar"] img {{
+        display: none !important;
     }}
 
     section[data-testid="stSidebar"] .block-container {{
         padding-top: 0.35rem !important;
-    }}
-
-    .sidebar-logo-wrap {{
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin: 0.10rem 0 0.60rem 0;
-        overflow: hidden;
-    }}
-
-    /* Fixed logo size: never grows with sidebar width */
-    .sidebar-logo-wrap img {{
-        width: 135px !important;
-        min-width: 135px !important;
-        max-width: 135px !important;
-        height: auto !important;
-        display: block !important;
-        object-fit: contain !important;
     }}
 
     div[data-testid="stHorizontalBlock"] {{
@@ -136,20 +114,8 @@ def inject_css():
     st.markdown(_build_css(maiora_b64), unsafe_allow_html=True)
 
 
-def render_sidebar_logo():
-    possible_paths = ["logo_silversea.png", "logo_maiora.png"]
-    logo_path = next((p for p in possible_paths if os.path.exists(p)), None)
-
-    if logo_path:
-        with st.sidebar:
-            st.markdown('<div class="sidebar-logo-wrap">', unsafe_allow_html=True)
-            st.image(logo_path, width=135)
-            st.markdown("</div>", unsafe_allow_html=True)
-
-
 def page_header(title: str, description: str):
     inject_css()
-    render_sidebar_logo()
     st.title(title)
     st.caption(description)
     st.divider()
