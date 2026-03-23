@@ -44,12 +44,12 @@ def _build_css(maiora_b64: str) -> str:
             z-index: 1000;
             pointer-events: none;
             white-space: nowrap;
+            line-height: 1;
         }}
         """
 
     return f"""
     <style>
-    /* Layout */
     .block-container {{
         padding-top: 2.8rem !important;
         padding-bottom: 0.5rem !important;
@@ -57,7 +57,6 @@ def _build_css(maiora_b64: str) -> str:
         padding-right: 1rem !important;
     }}
 
-    /* Header */
     [data-testid="stHeader"] {{
         background: white !important;
         border-bottom: 1px solid #e8e8e8 !important;
@@ -67,29 +66,25 @@ def _build_css(maiora_b64: str) -> str:
 
     {header_branding}
 
-    /* ðŸ”¥ REMOVE ANY IMAGE FROM SIDEBAR (expanded + collapsed) */
+    /* Remove any sidebar logo/image, but keep sidebar header and collapse button */
     section[data-testid="stSidebar"] img {{
         display: none !important;
         visibility: hidden !important;
         height: 0 !important;
+        width: 0 !important;
+        max-width: 0 !important;
     }}
 
-    /* Also remove possible logo container spacing */
-    section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] {{
+    /* Remove empty space from possible logo wrappers, but DO NOT hide stSidebarHeader */
+    section[data-testid="stSidebar"] [data-testid="stLogo"] {{
         display: none !important;
     }}
 
-    /* Extra safety: collapsed sidebar */
-    section[data-testid="stSidebar"][aria-expanded="false"] img {{
-        display: none !important;
-    }}
-
-    /* Compact sidebar */
+    /* Keep sidebar usable and compact */
     section[data-testid="stSidebar"] .block-container {{
         padding-top: 0.3rem !important;
     }}
 
-    /* Widgets */
     div[data-testid="stHorizontalBlock"] {{
         gap: 6px !important;
         align-items: flex-end !important;
@@ -175,7 +170,7 @@ def style_numeric_heatmap(
     def cell(val):
         try:
             v = float(val)
-        except:
+        except Exception:
             return "text-align:center"
 
         if not np.isfinite(v):
@@ -192,10 +187,10 @@ def style_numeric_heatmap(
     return (
         df.style.applymap(cell)
         .format(fmt, na_rep=na_rep)
-        .set_properties(**{"text-align": "center"})
+        .set_properties(**{{"text-align": "center"}})
         .set_table_styles([
-            {"selector": "th", "props": [("text-align", "center")]},
-            {"selector": "th.row_heading", "props": [("text-align", "left")]}
+            {{"selector": "th", "props": [("text-align", "center")]}},
+            {{"selector": "th.row_heading", "props": [("text-align", "left")]}}
         ])
     )
 
@@ -204,7 +199,7 @@ def style_pct_heatmap(df: pd.DataFrame, fmt: str = "{:+.1f}%", na_rep: str = "â€
     def cell(val):
         try:
             v = float(val)
-        except:
+        except Exception:
             return "text-align:center"
 
         if not np.isfinite(v):
@@ -230,9 +225,9 @@ def style_pct_heatmap(df: pd.DataFrame, fmt: str = "{:+.1f}%", na_rep: str = "â€
     return (
         df.style.applymap(cell)
         .format(fmt, na_rep=na_rep)
-        .set_properties(**{"text-align": "center"})
+        .set_properties(**{{"text-align": "center"}})
         .set_table_styles([
-            {"selector": "th", "props": [("text-align", "center")]},
-            {"selector": "th.row_heading", "props": [("text-align", "left")]}
+            {{"selector": "th", "props": [("text-align", "center")]}},
+            {{"selector": "th.row_heading", "props": [("text-align", "left")]}}
         ])
     )
