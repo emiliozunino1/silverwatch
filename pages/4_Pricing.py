@@ -15,6 +15,10 @@ inject_css()
 require_login()
 logout_button()
 
+import os
+if os.path.exists("logo.png"):
+    st.logo("logo.png", size="large")
+
 DATA_PATH = "SilverWatch_PowerBi_input_ALL_MARKETS.xlsx"
 df_full = load_data(DATA_PATH)
 filters = render_sidebar(df_full)
@@ -39,8 +43,9 @@ CS=dict(paper_bgcolor="white",plot_bgcolor="#fafafa")
 
 page_header("Pricing","Entry PPD — Available bookings only, ABD-weighted averages.")
 
-# Shared top filters — compact single row
-f=st.columns([1,1,1,2,2,1])
+# Shared top filters in collapsed expander
+with st.expander("🔽 Filters", expanded=False):
+    f=st.columns([1,1,1,2,2,1])
 sel_yr   =f[0].multiselect("Year",  all_years, default=all_years, key="p_yr")
 sel_mon  =f[1].multiselect("Month", list(range(1,13)), format_func=lambda x:MONTH_NAMES[x],
                             default=list(range(1,13)), key="p_mon")

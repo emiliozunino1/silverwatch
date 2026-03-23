@@ -12,6 +12,10 @@ inject_css()
 require_login()
 logout_button()
 
+import os
+if os.path.exists("logo.png"):
+    st.logo("logo.png", size="large")
+
 DATA_PATH = "SilverWatch_PowerBi_input_ALL_MARKETS.xlsx"
 df_full = load_data(DATA_PATH)
 filters = render_sidebar(df_full)
@@ -35,10 +39,11 @@ tab1, tab2, tab3 = st.tabs(["Voyage list", "Ship deployment timeline", "Company 
 
 # ── Tab 1 ─────────────────────────────────────────────────────────────────────
 with tab1:
-    f = st.columns([3,3,3])
-    sel_co  = f[0].multiselect("Company", all_cos, default=all_cos, key="bv_co")
-    sel_ar  = f[1].multiselect("Area", all_areas, default=[], key="bv_area")
-    search  = f[2].text_input("Search itinerary / voyage ID", key="bv_search")
+    with st.expander("🔽 Filters", expanded=False):
+        f = st.columns(3)
+        sel_co  = f[0].multiselect("Company", all_cos, default=all_cos, key="bv_co")
+        sel_ar  = f[1].multiselect("Area", all_areas, default=[], key="bv_area")
+        search  = f[2].text_input("Search itinerary / voyage ID", key="bv_search")
 
     base_cols = ["Company","ShipName","Voyage","AreaLabel","Itinerary"]
     port_cols = [c for c in ["Embarkement_Port_Name","Disembarkement_Port_Name"]
@@ -74,14 +79,14 @@ with tab1:
 
 # ── Tab 2 ─────────────────────────────────────────────────────────────────────
 with tab2:
-    f = st.columns([1,2,2,3])
-    sel_yr_g  = f[0].multiselect("Year", all_years,
-                                  default=all_years[:2], key="g_yr")
-    sel_mon_g = f[1].multiselect("Month", list(range(1,13)),
-                                  format_func=lambda x: MONTH_NAMES[x],
-                                  default=list(range(1,13)), key="g_mon")
-    sel_ar_g  = f[2].multiselect("Area", all_areas, default=all_areas, key="g_area")
-    sel_co_g  = f[3].multiselect("Companies", all_cos, default=all_cos, key="g_co")
+    with st.expander("🔽 Filters", expanded=False):
+        f = st.columns(4)
+        sel_yr_g  = f[0].multiselect("Year", all_years, default=all_years[:2], key="g_yr")
+        sel_mon_g = f[1].multiselect("Month", list(range(1,13)),
+                                      format_func=lambda x: MONTH_NAMES[x],
+                                      default=list(range(1,13)), key="g_mon")
+        sel_ar_g  = f[2].multiselect("Area", all_areas, default=all_areas, key="g_area")
+        sel_co_g  = f[3].multiselect("Companies", all_cos, default=all_cos, key="g_co")
 
     df_g = df_last.copy()
     if sel_yr_g:  df_g = df_g[df_g["ArrivalYear"].isin(sel_yr_g)]
@@ -124,13 +129,13 @@ with tab2:
 
 # ── Tab 3 ─────────────────────────────────────────────────────────────────────
 with tab3:
-    f = st.columns([1,1,1,1,3])
-    comp_a    = f[0].selectbox("Company A", all_cos, index=0, key="cc_a")
-    comp_b    = f[1].selectbox("Company B", all_cos, index=min(1,len(all_cos)-1), key="cc_b")
-    sel_yr_cc = f[2].multiselect("Year", all_years,
-                                  default=all_years[:1], key="cc_yr")
-    sel_ar_cc = f[3].multiselect("Area", all_areas, default=[], key="cc_area")
-    dep_range = f[4].date_input("Departure date range",
+    with st.expander("🔽 Filters", expanded=False):
+        f = st.columns(5)
+        comp_a    = f[0].selectbox("Company A", all_cos, index=0, key="cc_a")
+        comp_b    = f[1].selectbox("Company B", all_cos, index=min(1,len(all_cos)-1), key="cc_b")
+        sel_yr_cc = f[2].multiselect("Year", all_years, default=all_years[:1], key="cc_yr")
+        sel_ar_cc = f[3].multiselect("Area", all_areas, default=[], key="cc_area")
+        dep_range = f[4].date_input("Departure date range",
                                  value=(df_last["DepartureDate"].min().date(),
                                         df_last["DepartureDate"].max().date()),
                                  key="cc_dep")

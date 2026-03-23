@@ -1,7 +1,7 @@
 import streamlit as st
 import os
 from utils.auth import require_login, logout_button
-from utils.ui import inject_css, page_header
+from utils.ui import page_header
 
 st.set_page_config(
     page_title="SilverWatch",
@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Silversea logo above sidebar menu
+# Silversea logo above sidebar navigation
 if os.path.exists("logo.png"):
     st.logo("logo.png", size="large")
 

@@ -13,6 +13,10 @@ inject_css()
 require_login()
 logout_button()
 
+import os
+if os.path.exists("logo.png"):
+    st.logo("logo.png", size="large")
+
 DATA_PATH = "SilverWatch_PowerBi_input_ALL_MARKETS.xlsx"
 df_full = load_data(DATA_PATH)
 filters = render_sidebar(df_full)
@@ -36,13 +40,13 @@ page_header("Capacity Map",
 tab1, tab2, tab3, tab4 = st.tabs(
     ["By Area & Company", "By Ship & Area", "ABD Heatmap", "World Map"])
 
-# ── Tab 1 ─────────────────────────────────────────────────────────────────────
 with tab1:
-    f = st.columns([3,3,2])
-    sel_co  = f[0].multiselect("Companies", all_cos, default=all_cos, key="t1_co")
-    sel_mon = f[1].multiselect("Months", all_months, format_func=lambda x: MONTH_NAMES[x],
-                                default=all_months, key="t1_mon")
-    chart_t = f[2].selectbox("Chart type", ["Stacked","100%","Treemap"], key="t1_chart")
+    with st.expander("🔽 Filters", expanded=False):
+        f = st.columns(3)
+        sel_co  = f[0].multiselect("Companies", all_cos, default=all_cos, key="t1_co")
+        sel_mon = f[1].multiselect("Months", all_months, format_func=lambda x: MONTH_NAMES[x],
+                                    default=all_months, key="t1_mon")
+        chart_t = f[2].selectbox("Chart type", ["Stacked","100%","Treemap"], key="t1_chart")
 
     df_t = df_last.copy()
     if sel_co:  df_t = df_t[df_t["Company"].isin(sel_co)]
@@ -69,13 +73,13 @@ with tab1:
         fig.update_xaxes(tickangle=30)
         bordered_chart(fig, use_container_width=True)
 
-# ── Tab 2 ─────────────────────────────────────────────────────────────────────
 with tab2:
-    f = st.columns([3,3,2])
-    sel_co2  = f[0].multiselect("Companies", all_cos, default=all_cos, key="t2_co")
-    sel_mon2 = f[1].multiselect("Months", all_months, format_func=lambda x: MONTH_NAMES[x],
-                                 default=all_months, key="t2_mon")
-    row_by   = f[2].selectbox("Rows", ["Ship","Area"], key="t2_rows")
+    with st.expander("🔽 Filters", expanded=False):
+        f = st.columns(3)
+        sel_co2  = f[0].multiselect("Companies", all_cos, default=all_cos, key="t2_co")
+        sel_mon2 = f[1].multiselect("Months", all_months, format_func=lambda x: MONTH_NAMES[x],
+                                     default=all_months, key="t2_mon")
+        row_by   = f[2].selectbox("Rows", ["Ship","Area"], key="t2_rows")
 
     df_t2 = df_last.copy()
     if sel_co2:  df_t2 = df_t2[df_t2["Company"].isin(sel_co2)]
@@ -104,11 +108,11 @@ with tab2:
                               margin=dict(t=28,b=15,l=130,r=10), paper_bgcolor="white")
             bordered_chart(fig, use_container_width=True)
 
-# ── Tab 3 ─────────────────────────────────────────────────────────────────────
 with tab3:
-    f = st.columns([3,3])
-    sel_co3   = f[0].multiselect("Companies", all_cos, default=all_cos, key="t3_co")
-    sel_area3 = f[1].multiselect("Areas", all_areas, default=all_areas, key="t3_area")
+    with st.expander("🔽 Filters", expanded=False):
+        f = st.columns(2)
+        sel_co3   = f[0].multiselect("Companies", all_cos, default=all_cos, key="t3_co")
+        sel_area3 = f[1].multiselect("Areas", all_areas, default=all_areas, key="t3_area")
 
     df_t3 = df_last.copy()
     if sel_co3:   df_t3 = df_t3[df_t3["Company"].isin(sel_co3)]
@@ -131,15 +135,15 @@ with tab3:
                           paper_bgcolor="white")
         bordered_chart(fig, use_container_width=True)
 
-# ── Tab 4 ─────────────────────────────────────────────────────────────────────
 with tab4:
-    f = st.columns([2,2,3,1,2])
-    sel_yr_m  = f[0].multiselect("Year", all_years, default=all_years, key="map_yr")
-    sel_mon_m = f[1].multiselect("Month", all_months, format_func=lambda x: MONTH_NAMES[x],
-                                  default=all_months, key="map_mon")
-    sel_area_m= f[2].multiselect("Area", all_areas, default=all_areas, key="map_area")
-    color_by  = f[3].selectbox("Color by", ["Company","Area"], key="map_col")
-    map_by    = f[4].selectbox("Map by", ["Area","Embarkation port"], key="map_geo")
+    with st.expander("🔽 Filters", expanded=False):
+        f = st.columns(5)
+        sel_yr_m  = f[0].multiselect("Year", all_years, default=all_years, key="map_yr")
+        sel_mon_m = f[1].multiselect("Month", all_months, format_func=lambda x: MONTH_NAMES[x],
+                                      default=all_months, key="map_mon")
+        sel_area_m= f[2].multiselect("Area", all_areas, default=all_areas, key="map_area")
+        color_by  = f[3].selectbox("Color by", ["Company","Area"], key="map_col")
+        map_by    = f[4].selectbox("Map by", ["Area","Embarkation port"], key="map_geo")
 
     df_m = df_last.copy()
     if sel_yr_m:   df_m = df_m[df_m["ArrivalYear"].isin(sel_yr_m)]

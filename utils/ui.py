@@ -8,70 +8,63 @@ def _img_to_b64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
-LAYOUT_CSS = """
+# CSS: reduce padding, keep Streamlit toolbar visible, inject logo into toolbar area
+def _build_css(maiora_b64: str) -> str:
+    logo_display = f'url("data:image/png;base64,{maiora_b64}")' if maiora_b64 else "none"
+    return f"""
 <style>
-/* Remove default top padding */
-.block-container {
-    padding-top: 3.5rem !important;
+/* Tighten page padding */
+.block-container {{
+    padding-top: 1rem !important;
     padding-bottom: 0.5rem !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
-}
-/* Tighter widgets */
-div[data-testid="stHorizontalBlock"] { gap: 6px !important; align-items: flex-end !important; }
-label[data-testid="stWidgetLabel"] p { font-size: 0.78rem !important; margin-bottom: 1px !important; }
-div[data-baseweb="select"] { font-size: 0.80rem !important; }
-button[data-baseweb="tab"] { padding: 4px 14px !important; font-size: 0.84rem !important; }
-section[data-testid="stSidebar"] .block-container { padding-top: 0.3rem !important; }
-hr { margin: 0.3rem 0 !important; }
-/* Page title size */
-[data-testid="stAppViewContainer"] h1 {
-    font-size: 1.25rem !important;
-    margin: 0.1rem 0 0 0 !important;
+}}
+
+/* Inject Maiora logo + SILVERWATCH text into the Streamlit header bar */
+[data-testid="stHeader"] {{
+    background: white !important;
+    border-bottom: 1px solid #e8e8e8 !important;
+}}
+[data-testid="stHeader"]::before {{
+    content: "SILVERWATCH";
+    position: absolute;
+    left: {'120px' if maiora_b64 else '16px'};
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #1a1a2e;
+    z-index: 999;
+}}
+{'[data-testid="stHeader"]::after { content: ""; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 100px; height: 32px; background-image: ' + logo_display + '; background-size: contain; background-repeat: no-repeat; background-position: left center; z-index: 999; }' if maiora_b64 else ''}
+
+/* Silversea logo in sidebar — handled via st.logo() */
+/* Compact widgets */
+div[data-testid="stHorizontalBlock"] {{ gap: 6px !important; align-items: flex-end !important; }}
+label[data-testid="stWidgetLabel"] p {{ font-size: 0.78rem !important; margin-bottom: 1px !important; }}
+div[data-baseweb="select"] {{ font-size: 0.80rem !important; }}
+button[data-baseweb="tab"] {{ padding: 4px 14px !important; font-size: 0.84rem !important; }}
+section[data-testid="stSidebar"] .block-container {{ padding-top: 0.3rem !important; }}
+hr {{ margin: 0.3rem 0 !important; }}
+[data-testid="stAppViewContainer"] h1 {{
+    font-size: 1.2rem !important;
+    margin: 0.2rem 0 0 0 !important;
     padding: 0 !important;
-}
+}}
 </style>
 """
 
-def _fixed_header_html(maiora_logo_path: str, title: str, description: str) -> str:
-    """Build the fixed top bar: Maiora logo + SILVERWATCH text, flush with Streamlit toolbar."""
-    logo_html = ""
-    if os.path.exists(maiora_logo_path):
-        b64 = _img_to_b64(maiora_logo_path)
-        ext = maiora_logo_path.split(".")[-1].lower()
-        mime = "image/png" if ext == "png" else "image/jpeg"
-        logo_html = f'<img src="data:{mime};base64,{b64}" style="height:28px;vertical-align:middle;margin-right:8px;">'
-
-    return f"""
-<div style="
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 48px;
-    background: white;
-    border-bottom: 1px solid #e0e0e0;
-    display: flex;
-    align-items: center;
-    padding: 0 1rem;
-    z-index: 999990;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-">
-    {logo_html}
-    <span style="font-size:1.0rem;font-weight:700;letter-spacing:0.1em;color:#1a1a2e;">
-        SILVERWATCH
-    </span>
-</div>
-"""
-
 def inject_css():
-    st.markdown(LAYOUT_CSS, unsafe_allow_html=True)
+    maiora_b64 = ""
+    if os.path.exists("logo_maiora.png"):
+        maiora_b64 = _img_to_b64("logo_maiora.png")
+    st.markdown(_build_css(maiora_b64), unsafe_allow_html=True)
 
 
 def page_header(title: str, description: str):
     inject_css()
-    maiora = "logo_maiora.png"
-    st.markdown(_fixed_header_html(maiora, title, description), unsafe_allow_html=True)
     st.title(title)
     st.caption(description)
     st.divider()

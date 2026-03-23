@@ -14,6 +14,10 @@ inject_css()
 require_login()
 logout_button()
 
+import os
+if os.path.exists("logo.png"):
+    st.logo("logo.png", size="large")
+
 DATA_PATH = "SilverWatch_PowerBi_input_ALL_MARKETS.xlsx"
 df_full = load_data(DATA_PATH)
 filters = render_sidebar(df_full)
@@ -36,12 +40,13 @@ page_header("Capacity Movement",
 tab1, tab2 = st.tabs(["ABD by area over time", "Ship redeployment matrix"])
 
 with tab1:
-    f = st.columns([2,2,3])
-    sel_yr  = f[0].multiselect("Year",  all_years, default=all_years, key="am_yr")
-    sel_mon = f[1].multiselect("Month", list(range(1,13)),
-                                format_func=lambda x: MONTH_NAMES[x],
-                                default=list(range(1,13)), key="am_mon")
-    sel_ar  = f[2].multiselect("Area",  all_areas, default=all_areas, key="am_area")
+    with st.expander("🔽 Filters", expanded=False):
+        f = st.columns(3)
+        sel_yr  = f[0].multiselect("Year",  all_years, default=all_years, key="am_yr")
+        sel_mon = f[1].multiselect("Month", list(range(1,13)),
+                                    format_func=lambda x: MONTH_NAMES[x],
+                                    default=list(range(1,13)), key="am_mon")
+        sel_ar  = f[2].multiselect("Area",  all_areas, default=all_areas, key="am_area")
 
     df_am = df.copy()
     if sel_yr:  df_am = df_am[df_am["ArrivalYear"].isin(sel_yr)]
@@ -84,12 +89,13 @@ with tab1:
     bordered_chart(fig_d, use_container_width=True)
 
 with tab2:
-    f = st.columns([3,2,3])
-    sel_co_sr  = f[0].multiselect("Companies", all_cos, default=all_cos[:3], key="sr_co")
-    sel_yr_sr  = f[1].multiselect("Year", all_years, default=all_years, key="sr_yr")
-    sel_mon_sr = f[2].multiselect("Month", list(range(1,13)),
-                                   format_func=lambda x: MONTH_NAMES[x],
-                                   default=list(range(1,13)), key="sr_mon")
+    with st.expander("🔽 Filters", expanded=False):
+        f = st.columns(3)
+        sel_co_sr  = f[0].multiselect("Companies", all_cos, default=all_cos[:3], key="sr_co")
+        sel_yr_sr  = f[1].multiselect("Year", all_years, default=all_years, key="sr_yr")
+        sel_mon_sr = f[2].multiselect("Month", list(range(1,13)),
+                                       format_func=lambda x: MONTH_NAMES[x],
+                                       default=list(range(1,13)), key="sr_mon")
 
     df_sr = df.copy()
     if sel_co_sr:  df_sr = df_sr[df_sr["Company"].isin(sel_co_sr)]
