@@ -8,20 +8,38 @@ def _img_to_b64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
  
-# CSS: reduce padding, keep Streamlit toolbar visible, inject logo into toolbar area
-def _build_css(maiora_b64: str) -> str:
-    logo_display = f'url("data:image/png;base64,{maiora_b64}")' if maiora_b64 else "none"
-    return f"""
+def inject_css():
+    maiora_b64 = ""
+    if os.path.exists("logo_maiora.png"):
+        maiora_b64 = _img_to_b64("logo_maiora.png")
+ 
+    logo_after = ""
+    if maiora_b64:
+        logo_after = (
+            '[data-testid="stHeader"]::after {'
+            ' content: "";'
+            ' position: absolute;'
+            ' left: 8px; top: 50%;'
+            ' transform: translateY(-50%);'
+            ' width: 100px; height: 32px;'
+            ' background-image: url("data:image/png;base64,' + maiora_b64 + '");'
+            ' background-size: contain;'
+            ' background-repeat: no-repeat;'
+            ' background-position: left center;'
+            ' z-index: 999; }'
+        )
+        silverwatch_left = "120px"
+    else:
+        silverwatch_left = "16px"
+ 
+    css = f"""
 <style>
-/* Tighten page padding */
 .block-container {{
     padding-top: 2.8rem !important;
     padding-bottom: 0.5rem !important;
     padding-left: 1rem !important;
     padding-right: 1rem !important;
 }}
- 
-/* Inject Maiora logo + SILVERWATCH text into the Streamlit header bar */
 [data-testid="stHeader"] {{
     background: white !important;
     border-bottom: 1px solid #e8e8e8 !important;
@@ -29,7 +47,7 @@ def _build_css(maiora_b64: str) -> str:
 [data-testid="stHeader"]::before {{
     content: "SILVERWATCH";
     position: absolute;
-    left: {'120px' if maiora_b64 else '16px'};
+    left: {silverwatch_left};
     top: 50%;
     transform: translateY(-50%);
     font-size: 0.95rem;
@@ -38,23 +56,7 @@ def _build_css(maiora_b64: str) -> str:
     color: #1a1a2e;
     z-index: 999;
 }}
-{'[data-testid="stHeader"]::after { content: ""; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 100px; height: 32px; background-image: ' + logo_display + '; background-size: contain; background-repeat: no-repeat; background-position: left center; z-index: 999; }' if maiora_b64 else ''}
- 
-/* Silversea logo in sidebar — bigger and centered */
-[data-testid="stSidebarHeader"] img,
-[data-testid="stLogo"] img {
-    width: 70%% !important;
-    max-width: 140px !important;
-    margin: 0 auto !important;
-    display: block !important;
-}
-[data-testid="stSidebarHeader"],
-[data-testid="stLogo"] {
-    display: flex !important;
-    justify-content: center !important;
-    padding: 0.5rem 0 !important;
-}
-/* Compact widgets */
+{logo_after}
 div[data-testid="stHorizontalBlock"] {{ gap: 6px !important; align-items: flex-end !important; }}
 label[data-testid="stWidgetLabel"] p {{ font-size: 0.78rem !important; margin-bottom: 1px !important; }}
 div[data-baseweb="select"] {{ font-size: 0.80rem !important; }}
@@ -68,12 +70,27 @@ hr {{ margin: 0.3rem 0 !important; }}
 }}
 </style>
 """
+    st.markdown(css, unsafe_allow_html=True)
  
-def inject_css():
-    maiora_b64 = ""
-    if os.path.exists("logo_maiora.png"):
-        maiora_b64 = _img_to_b64("logo_maiora.png")
-    st.markdown(_build_css(maiora_b64), unsafe_allow_html=True)
+    # Sidebar logo size via separate non-f-string CSS
+    sidebar_css = """
+<style>
+[data-testid="stSidebarHeader"] img,
+[data-testid="stLogo"] img {
+    width: 70% !important;
+    max-width: 140px !important;
+    margin: 0 auto !important;
+    display: block !important;
+}
+[data-testid="stSidebarHeader"],
+[data-testid="stLogo"] {
+    display: flex !important;
+    justify-content: center !important;
+    padding: 0.5rem 0 !important;
+}
+</style>
+"""
+    st.markdown(sidebar_css, unsafe_allow_html=True)
  
  
 def page_header(title: str, description: str):
