@@ -18,6 +18,10 @@ if not is_admin():
 
 page_header("Control Panel", "Data quality checks, file refresh and user management. Admin only.")
 
+import os
+if os.path.exists("logo.png"):
+    st.logo("logo.png", size="large")
+
 DATA_PATH = "SilverWatch_PowerBi_input_ALL_MARKETS.xlsx"
 
 tab_data, tab_qc, tab_users = st.tabs(["Data & File", "Quality Checks", "User Management"])
